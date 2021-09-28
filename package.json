@@ -1,0 +1,48 @@
+{
+  "name": "marine-otter",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Production Release Auto tagging bot",
+  "author": "akiten.io <akiten@naver.com>, fennec.fox <elijah17@gmail.com>",
+  "keywords": [
+    "probot",
+    "github",
+    "probot-app"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prestart": "npm run build",
+    "start": "probot run ./dist/index.js",
+    "start:production": "NODE_ENV=production DOTENV_CONFIG_PATH=.env.production npm run start",
+    "test": "jest"
+  },
+  "dependencies": {
+    "dotenv-flow": "^3.2.0",
+    "module-alias": "^2.2.2",
+    "probot": "^10.9.5",
+    "semver": "^7.3.2",
+    "simple-git": "^2.23.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^26.0.9",
+    "@types/node": "^14.0.27",
+    "@types/semver": "^7.3.4",
+    "@typescript-eslint/eslint-plugin": "^4.6.0",
+    "@typescript-eslint/parser": "^4.6.0",
+    "eslint": "^7.12.1",
+    "jest": "^26.4.0",
+    "nock": "^13.0.4",
+    "smee-client": "^1.1.0",
+    "ts-jest": "^26.2.0",
+    "typescript": "^3.9.7"
+  },
+  "engines": {
+    "node": ">= 10.13.0"
+  },
+  "jest": {
+    "testEnvironment": "node"
+  },
+  "_moduleAliases": {
+    "@": "dist"
+  }
+}
