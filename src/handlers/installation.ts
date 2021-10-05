@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { RequestHandler } from '@/models/handler'
 import { InstallationContext } from '@/models/context'
 import { InstallationReference } from '@/models/github'
@@ -22,7 +23,6 @@ export const handleInstallation: RequestHandler<
 // add GIT_USER as admin
 async function addGitMember(
   context: InstallationContext,
-  // @ts-ignore
   reference: InstallationReference
 ) {
   const { github } = context
@@ -32,7 +32,6 @@ async function addGitMember(
 // set repository merge methods and other options if possible
 async function setRepositoryPermissions(
   context: InstallationContext,
-  // @ts-ignore
   reference: InstallationReference
 ) {
   const { github } = context
@@ -46,7 +45,6 @@ async function setRepositoryPermissions(
 // add default branch protection rules
 async function setBranchProtectionRules(
   context: InstallationContext,
-  // @ts-ignore
   reference: InstallationReference
 ) {
   const {

@@ -4,7 +4,7 @@ import {
   DEFAULT_BLOCK_MERGE_STATUS,
   DEFAULT_BRANCH_BUILD_STATUS,
   DEFAULT_PR_BUILD_STATUS,
-  MemeberRole,
+  MemberRole,
   MergeMethod,
   PullRequest,
 } from '@/models/github'
@@ -24,7 +24,7 @@ export class GitHub {
     }
   }
 
-  async addUserToOrganization(member: string, role: MemeberRole = 'admin') {
+  async addUserToOrganization(member: string, role: MemberRole = 'admin') {
     await this.delegate.orgs.setMembershipForUser({
       org: this.owner,
       username: member,

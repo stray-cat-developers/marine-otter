@@ -47,7 +47,7 @@ export type CommitStatus = 'success' | 'error' | 'pending'
 
 export type MergeMethod = 'merge' | 'squash'
 
-export type MemeberRole = 'admin' | 'member'
+export type MemberRole = 'admin' | 'member'
 
 export const DEFAULT_LABEL = {
   MANUAL_MERGE: 'merge:manual',
