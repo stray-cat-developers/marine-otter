@@ -1,7 +1,8 @@
 import { Context } from 'probot'
 import {
   CommitStatus,
-  DEFAULT_BLOCK_MERGE_STATUS, DEFAULT_BRANCH_BUILD_STATUS,
+  DEFAULT_BLOCK_MERGE_STATUS,
+  DEFAULT_BRANCH_BUILD_STATUS,
   DEFAULT_PR_BUILD_STATUS,
   MemeberRole,
   MergeMethod,
@@ -9,23 +10,21 @@ import {
 } from '@/models/github'
 
 export class GitHub {
-
-  constructor (
+  constructor(
     private owner: string,
     private repo: string,
     private issueNumber: number,
-    private readonly delegate: Context['github'],
-  ) {
-  }
+    private readonly delegate: Context['github']
+  ) {}
 
-  private get reference () {
+  private get reference() {
     return {
       repo: this.repo,
       owner: this.owner,
     }
   }
 
-  async addUserToOrganization (member: string, role: MemeberRole = 'admin') {
+  async addUserToOrganization(member: string, role: MemeberRole = 'admin') {
     await this.delegate.orgs.setMembershipForUser({
       org: this.owner,
       username: member,
@@ -33,38 +32,51 @@ export class GitHub {
     })
   }
 
-  async getReleaseNotePath (version: string) {
-    const { data } = await this.delegate.repos.getReleaseByTag({ ...(this.reference), tag: version })
+  async getReleaseNotePath(version: string) {
+    const { data } = await this.delegate.repos.getReleaseByTag({
+      ...this.reference,
+      tag: version,
+    })
     return data.html_url
   }
 
-  async setRepository ({
+  async setRepository({
     allowMergeCommit,
     allowSquashMerge,
     allowRebaseMerge,
-  }: { allowRebaseMerge?: boolean, allowMergeCommit?: boolean, allowSquashMerge?: boolean }) {
+  }: {
+    allowRebaseMerge?: boolean
+    allowMergeCommit?: boolean
+    allowSquashMerge?: boolean
+  }) {
     await this.delegate.repos.update({
-      ...(this.reference), allow_merge_commit: allowMergeCommit, allow_squash_merge: allowSquashMerge,
+      ...this.reference,
+      allow_merge_commit: allowMergeCommit,
+      allow_squash_merge: allowSquashMerge,
       allow_rebase_merge: allowRebaseMerge,
     })
   }
 
-  async setBranchProtection (
+  async setBranchProtection(
     branch: string,
     option: {
-      onlySquashMerge?: boolean,
-      blockManualMerge?: boolean,
+      onlySquashMerge?: boolean
+      blockManualMerge?: boolean
       requireBranchBuildSuccess?: boolean
       requirePRBuildSuccess?: boolean
       requireReviewAtLeast?: number
-    }) {
+    }
+  ) {
     const requireChecks = []
-    if (option.blockManualMerge) requireChecks.push(DEFAULT_BLOCK_MERGE_STATUS.context)
-    if (option.requireBranchBuildSuccess) requireChecks.push(DEFAULT_BRANCH_BUILD_STATUS.context)
-    if (option.requirePRBuildSuccess) requireChecks.push(DEFAULT_PR_BUILD_STATUS.context)
+    if (option.blockManualMerge)
+      requireChecks.push(DEFAULT_BLOCK_MERGE_STATUS.context)
+    if (option.requireBranchBuildSuccess)
+      requireChecks.push(DEFAULT_BRANCH_BUILD_STATUS.context)
+    if (option.requirePRBuildSuccess)
+      requireChecks.push(DEFAULT_PR_BUILD_STATUS.context)
 
     await this.delegate.repos.updateBranchProtection({
-      ...(this.reference),
+      ...this.reference,
       branch,
       required_linear_history: option.onlySquashMerge,
       required_status_checks: {
@@ -72,9 +84,12 @@ export class GitHub {
         contexts: requireChecks,
       },
       enforce_admins: false,
-      required_pull_request_reviews: option.requireReviewAtLeast || 0 > 0 ? {
-        required_approving_review_count: option.requireReviewAtLeast,
-      } : null,
+      required_pull_request_reviews:
+        option.requireReviewAtLeast || 0 > 0
+          ? {
+              required_approving_review_count: option.requireReviewAtLeast,
+            }
+          : null,
       restrictions: null,
       headers: {
         // @see https://developer.github.com/enterprise/2.21/v3/repos/branches/#update-branch-protection
@@ -83,25 +98,25 @@ export class GitHub {
     })
   }
 
-  async comment (content: string) {
+  async comment(content: string) {
     await this.delegate.issues.createComment({
-      ...(this.reference),
+      ...this.reference,
       issue_number: this.issueNumber,
       body: content,
     })
   }
 
-  async getPullRequest () {
+  async getPullRequest() {
     const { data: pullRequest } = await this.delegate.pulls.get({
-      ...(this.reference),
+      ...this.reference,
       pull_number: this.issueNumber,
     })
     return pullRequest as unknown as PullRequest
   }
 
-  async mergePullRequest (title: string, content: string, method: MergeMethod) {
+  async mergePullRequest(title: string, content: string, method: MergeMethod) {
     await this.delegate.pulls.merge({
-      ...(this.reference),
+      ...this.reference,
       pull_number: this.issueNumber,
       commit_title: title,
       commit_message: content,
@@ -109,7 +124,7 @@ export class GitHub {
     })
   }
 
-  async getLabels () {
+  async getLabels() {
     const { data } = await this.delegate.issues.listLabelsOnIssue({
       owner: this.owner,
       repo: this.repo,
@@ -118,7 +133,7 @@ export class GitHub {
     return data.map((v) => v.name)
   }
 
-  async addLabels (labels: string[]) {
+  async addLabels(labels: string[]) {
     const currentLabels = await this.getLabels()
     await this.delegate.issues.setLabels({
       owner: this.owner,
@@ -128,54 +143,60 @@ export class GitHub {
     })
   }
 
-  async getTags () {
+  async getTags() {
     const { data } = await this.delegate.repos.listTags({
       owner: this.owner,
       repo: this.repo,
     })
-    return data.map((v => v.name))
+    return data.map((v) => v.name)
   }
 
-  async blockMerge (sha: string) {
-    await this.createCommitStatus(sha, 'error',
+  async blockMerge(sha: string) {
+    await this.createCommitStatus(
+      sha,
+      'error',
       DEFAULT_BLOCK_MERGE_STATUS.name,
       DEFAULT_BLOCK_MERGE_STATUS.context,
-      DEFAULT_BLOCK_MERGE_STATUS.description)
-  }
-
-  async allowMerge (sha: string) {
-    await this.createCommitStatus(sha, 'success',
-      DEFAULT_BLOCK_MERGE_STATUS.name,
-      DEFAULT_BLOCK_MERGE_STATUS.context,
-      DEFAULT_BLOCK_MERGE_STATUS.description)
-  }
-
-  async getCommits () {
-    const { data } = await this.delegate.pulls.listCommits(
-      {
-        owner: this.owner,
-        repo: this.repo,
-        pull_number: this.issueNumber,
-      },
-    )
-    return data.map((v => v.commit))
-  }
-
-  async setPullRequestBody (message: string) {
-    await this.delegate.pulls.update(
-      {
-        owner: this.owner,
-        repo: this.repo,
-        pull_number: this.issueNumber,
-        body: message,
-      },
+      DEFAULT_BLOCK_MERGE_STATUS.description
     )
   }
 
-  async createRelease (sha: string, tag: string,
-    title: string, content: string) {
+  async allowMerge(sha: string) {
+    await this.createCommitStatus(
+      sha,
+      'success',
+      DEFAULT_BLOCK_MERGE_STATUS.name,
+      DEFAULT_BLOCK_MERGE_STATUS.context,
+      DEFAULT_BLOCK_MERGE_STATUS.description
+    )
+  }
+
+  async getCommits() {
+    const { data } = await this.delegate.pulls.listCommits({
+      owner: this.owner,
+      repo: this.repo,
+      pull_number: this.issueNumber,
+    })
+    return data.map((v) => v.commit)
+  }
+
+  async setPullRequestBody(message: string) {
+    await this.delegate.pulls.update({
+      owner: this.owner,
+      repo: this.repo,
+      pull_number: this.issueNumber,
+      body: message,
+    })
+  }
+
+  async createRelease(
+    sha: string,
+    tag: string,
+    title: string,
+    content: string
+  ) {
     await this.delegate.repos.createRelease({
-      ...(this.reference),
+      ...this.reference,
       target_commitish: sha,
       tag_name: tag,
       name: title,
@@ -183,12 +204,15 @@ export class GitHub {
     })
   }
 
-  private async createCommitStatus (sha: string, state: CommitStatus,
+  private async createCommitStatus(
+    sha: string,
+    state: CommitStatus,
     name: string,
     context: string,
-    description?: string) {
+    description?: string
+  ) {
     await this.delegate.repos.createCommitStatus({
-      ...(this.reference),
+      ...this.reference,
       name,
       context,
       description,
@@ -196,5 +220,4 @@ export class GitHub {
       sha,
     })
   }
-
 }

@@ -1,4 +1,3 @@
-
 export interface Config {
   enabled?: boolean
   releaseTitleTemplate?: string

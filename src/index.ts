@@ -5,6 +5,12 @@ import { addListeners } from '@/initialize'
 
 require('dotenv-flow').config({ silent: true })
 
-export = ({ app, getRouter }: { app: Application, getRouter: () => Router }) => {
+export = ({
+  app,
+  getRouter,
+}: {
+  app: Application
+  getRouter: () => Router
+}) => {
   addListeners(app, getRouter())
 }
