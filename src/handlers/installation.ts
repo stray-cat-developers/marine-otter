@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { RequestHandler } from '@/models/handler'
 import { InstallationContext } from '@/models/context'
 import { InstallationReference } from '@/models/github'
@@ -14,8 +13,7 @@ export const handleInstallation: RequestHandler<
       await setRepositoryPermissions(context, reference)
       await setBranchProtectionRules(context, reference)
     } catch (e) {
-      console.error(`failed to initial configure ${reference}`, e)
-      await logger.fatal(e)
+      await logger.fatal(`failed to initial configure ${reference}`)
     }
   }
 }
@@ -25,7 +23,8 @@ async function addGitMember(
   context: InstallationContext,
   reference: InstallationReference
 ) {
-  const { github } = context
+  const { github, logger } = context
+  await logger.debug(JSON.stringify(reference))
   await github.addUserToOrganization(process.env.GIT_USER!)
 }
 
@@ -34,7 +33,8 @@ async function setRepositoryPermissions(
   context: InstallationContext,
   reference: InstallationReference
 ) {
-  const { github } = context
+  const { github, logger } = context
+  await logger.debug(JSON.stringify(reference))
   await github.setRepository({
     allowMergeCommit: true,
     allowSquashMerge: true,
@@ -50,13 +50,16 @@ async function setBranchProtectionRules(
   const {
     github,
     config: { mainBranch, releaseBranch },
+    logger,
   } = context
-  await github.setBranchProtection(mainBranch!, {
+
+  await logger.debug(JSON.stringify(reference))
+  await github.setBranchProtection(mainBranch, {
     requirePRBuildSuccess: true,
     onlySquashMerge: true,
     requireReviewAtLeast: 1,
   })
-  await github.setBranchProtection(releaseBranch!, {
+  await github.setBranchProtection(releaseBranch, {
     requirePRBuildSuccess: true,
     blockManualMerge: true,
   })

@@ -20,14 +20,15 @@ export const handlePush: RequestHandler<PushContext, PushReference> = async (
 // add default branch protection rules
 async function setBranchProtectionRules(
   context: PushContext,
-  // @ts-ignore
   reference: PushReference
 ) {
   const {
     github,
     config: { mainBranch, releaseBranch },
     ref,
+    logger,
   } = context
+  await logger.debug(JSON.stringify(reference))
   if (ref == `refs/heads/${mainBranch}`) {
     await github.setBranchProtection(mainBranch!, {
       requirePRBuildSuccess: true,

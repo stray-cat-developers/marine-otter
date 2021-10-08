@@ -7,8 +7,12 @@ export class Logger {
     this.delegate.error(error)
   }
 
-  async info(error: any) {
-    await this.delegate.info(error)
+  async info(message: any) {
+    await this.delegate.info(message)
+  }
+
+  async debug(message: any) {
+    await this.delegate.debug(message)
   }
 
   async fatal(error: any) {

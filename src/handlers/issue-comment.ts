@@ -1,5 +1,9 @@
 import { IssueCommentContext } from '@/models/context'
-import { DEFAULT_LABEL, IssueCommentReference } from '@/models/github'
+import {
+  DEFAULT_LABEL,
+  IssueCommentReference,
+  MergeMethod,
+} from '@/models/github'
 import { RequestHandler } from '@/models/handler'
 import { VersionManager } from '@/utils/version'
 
@@ -31,22 +35,21 @@ export const handleIssueComment: RequestHandler<
 
 async function allowManualMerge(
   context: IssueCommentContext,
-  // @ts-ignore
   reference: IssueCommentReference
 ) {
-  const { github, content, pullRequest } = context
+  const { github, content, pullRequest, logger } = context
   const enableManualMerge = RegExp(
     `^!release-bot enable manualMerge$`,
     'g'
   ).test(content)
   if (!enableManualMerge) return
+  await logger.debug(JSON.stringify(reference))
   await github.addLabels([DEFAULT_LABEL.MANUAL_MERGE])
   await github.allowMerge(pullRequest?.head.sha || '')
 }
 
 async function processRelease(
   context: IssueCommentContext,
-  // @ts-ignore
   reference: IssueCommentReference
 ) {
   const {
@@ -56,7 +59,7 @@ async function processRelease(
     content,
     logger,
   } = context
-
+  await logger.debug(JSON.stringify(reference))
   if (!content.startsWith('!release-bot release')) return
 
   if (!checkReleaseBranch(context)) {
@@ -96,7 +99,7 @@ async function processRelease(
     await github.mergePullRequest(
       releaseTitleTemplate!.replace('${VERSION}', version),
       `${pullRequest!.body}`,
-      mergeMethod as any
+      mergeMethod as MergeMethod
     )
   } catch (e) {
     await github.comment(

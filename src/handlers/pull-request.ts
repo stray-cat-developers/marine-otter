@@ -52,13 +52,14 @@ async function prepareReleaseNote(context: PullRequestContext) {
 // block manual merge
 async function blockManualMerge(
   context: PullRequestContext,
-  // @ts-ignore
   reference: PullRequestReference
 ) {
   const {
     github,
     config: { blockManualMerge },
+    logger,
   } = context
+  await logger.debug(JSON.stringify(reference))
   if (!blockManualMerge) return
 
   // check manual merge allowed
@@ -74,10 +75,10 @@ async function blockManualMerge(
 // synchronize head and base
 async function pullFromBase(
   context: PullRequestContext,
-  // @ts-ignore
   reference: PullRequestReference
 ) {
-  const { git, base, head, github } = context
+  const { git, base, head, github, logger } = context
+  await logger.debug(JSON.stringify(reference))
   let message
   let error
   try {
@@ -118,13 +119,14 @@ async function pullFromBase(
 // when pr opened, add help comment
 async function addHelpComments(
   context: PullRequestContext,
-  // @ts-ignore
   reference: PullRequestReference
 ) {
   const {
     github,
     config: { mergeMethod },
+    logger,
   } = context
+  await logger.debug(JSON.stringify(reference))
   const labels = await github.getLabels()
   if (labels.includes(DEFAULT_LABEL.BOT)) return
   // add help comment
@@ -153,10 +155,10 @@ PR의 내용이 feature: blahblah 인 경우 아래와 같이 ${mergeMethod} com
 
 async function addNextVersionHint(
   context: PullRequestContext,
-  // @ts-ignore
   reference: PullRequestReference
 ) {
-  const { github, merged } = context
+  const { github, merged, logger } = context
+  await logger.debug(JSON.stringify(reference))
   if (merged) return
 
   const tags = await github.getTags()
@@ -186,7 +188,6 @@ async function addNextVersionHint(
 // when pr merged, push tag, publish release note
 async function pushTag(
   context: PullRequestContext,
-  // @ts-ignore
   reference: PullRequestReference
 ) {
   const {
@@ -195,6 +196,7 @@ async function pushTag(
     config: { releaseTitleTemplate },
     logger,
   } = context
+  await logger.debug(JSON.stringify(reference))
   if (!merged) return
 
   const labels = await github.getLabels()
@@ -224,7 +226,6 @@ async function pushTag(
 
 async function pushMergedCommitIntoMainBranch(
   context: PullRequestContext,
-  // @ts-ignore
   reference: PullRequestReference
 ) {
   const {
@@ -235,6 +236,7 @@ async function pushMergedCommitIntoMainBranch(
     merged,
     logger,
   } = context
+  await logger.debug(JSON.stringify(reference))
   if (!merged) return
   try {
     await git.clear()
@@ -254,9 +256,9 @@ async function pushMergedCommitIntoMainBranch(
 
 async function clearClosedIssue(
   context: PullRequestContext,
-  // @ts-ignore
   reference: PullRequestReference
 ) {
-  const { git } = context
+  const { git, logger } = context
+  await logger.debug(JSON.stringify(reference))
   await git.clear()
 }

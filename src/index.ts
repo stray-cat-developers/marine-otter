@@ -3,7 +3,9 @@ import { Application } from 'probot'
 import { Router } from 'express'
 import { addListeners } from '@/initialize'
 
-require('dotenv-flow').config({ silent: true })
+import { config } from 'dotenv-flow'
+
+config({ silent: true })
 
 export = ({
   app,
