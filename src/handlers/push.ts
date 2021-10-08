@@ -4,7 +4,7 @@ import { PushContext } from '@/models/context'
 
 export const handlePush: RequestHandler<PushContext, PushReference> = async (
   context: PushContext,
-  reference: PushReference,
+  reference: PushReference
 ) => {
   const { eventAction, logger } = context
   if (eventAction === 'created') {
@@ -18,12 +18,17 @@ export const handlePush: RequestHandler<PushContext, PushReference> = async (
 }
 
 // add default branch protection rules
-async function setBranchProtectionRules (
+async function setBranchProtectionRules(
   context: PushContext,
-  // @ts-ignore
-  reference: PushReference,
+  reference: PushReference
 ) {
-  const { github, config: { mainBranch, releaseBranch }, ref } = context
+  const {
+    github,
+    config: { mainBranch, releaseBranch },
+    ref,
+    logger,
+  } = context
+  await logger.debug(JSON.stringify(reference))
   if (ref == `refs/heads/${mainBranch}`) {
     await github.setBranchProtection(mainBranch!, {
       requirePRBuildSuccess: true,
@@ -32,6 +37,9 @@ async function setBranchProtectionRules (
     })
   }
   if (ref == `refs/heads/${releaseBranch}`) {
-    await github.setBranchProtection(releaseBranch!, { requirePRBuildSuccess: true, blockManualMerge: true })
+    await github.setBranchProtection(releaseBranch!, {
+      requirePRBuildSuccess: true,
+      blockManualMerge: true,
+    })
   }
 }

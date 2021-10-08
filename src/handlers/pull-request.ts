@@ -2,25 +2,28 @@ import { DEFAULT_LABEL, PullRequestReference } from '@/models/github'
 import { PullRequestContext } from '@/models/context'
 import { VersionManager } from '@/utils/version'
 
-export async function handlePullRequest (
+export async function handlePullRequest(
   context: PullRequestContext,
-  pullRequestReference: PullRequestReference,
+  pullRequestReference: PullRequestReference
 ) {
-  const { eventAction, logger, base, config: { releaseBranch }, github } = context
+  const {
+    eventAction,
+    logger,
+    base,
+    config: { releaseBranch },
+    github,
+  } = context
   if (base === releaseBranch) {
     try {
       if (
-        eventAction === 'opened'
-        || eventAction === 'reopened'
-        || eventAction === 'synchronize'
+        eventAction === 'opened' ||
+        eventAction === 'reopened' ||
+        eventAction === 'synchronize'
       ) {
         await blockManualMerge(context, pullRequestReference)
         await prepareReleaseNote(context)
       }
-      if (
-        eventAction === 'opened'
-        || eventAction === 'reopened'
-      ) {
+      if (eventAction === 'opened' || eventAction === 'reopened') {
         await addHelpComments(context, pullRequestReference)
         await addNextVersionHint(context, pullRequestReference)
         await pullFromBase(context, pullRequestReference)
@@ -30,8 +33,7 @@ export async function handlePullRequest (
         await pushMergedCommitIntoMainBranch(context, pullRequestReference)
         await clearClosedIssue(context, pullRequestReference)
       }
-    } catch
-      (e) {
+    } catch (e) {
       await github.comment(`Failed PR tagging. reason:\n\`\`\`${e}\`\`\``)
       await logger.fatal(e)
     }
@@ -39,23 +41,25 @@ export async function handlePullRequest (
 }
 
 // set commits as pull request's body
-async function prepareReleaseNote (
-  context: PullRequestContext,
-) {
+async function prepareReleaseNote(context: PullRequestContext) {
   const { github } = context
   const commits = await github.getCommits()
   let preReleaseNote = ''
-  commits.forEach(c => preReleaseNote += `${c.message.split('\n')[0]}\n`)
+  commits.forEach((c) => (preReleaseNote += `${c.message.split('\n')[0]}\n`))
   await github.setPullRequestBody(preReleaseNote)
 }
 
 // block manual merge
-async function blockManualMerge (
+async function blockManualMerge(
   context: PullRequestContext,
-  // @ts-ignore
-  reference: PullRequestReference,
+  reference: PullRequestReference
 ) {
-  const { github, config: { blockManualMerge } } = context
+  const {
+    github,
+    config: { blockManualMerge },
+    logger,
+  } = context
+  await logger.debug(JSON.stringify(reference))
   if (!blockManualMerge) return
 
   // check manual merge allowed
@@ -69,12 +73,12 @@ async function blockManualMerge (
 }
 
 // synchronize head and base
-async function pullFromBase (
+async function pullFromBase(
   context: PullRequestContext,
-  // @ts-ignore
-  reference: PullRequestReference,
+  reference: PullRequestReference
 ) {
-  const { git, base, head, github } = context
+  const { git, base, head, github, logger } = context
+  await logger.debug(JSON.stringify(reference))
   let message
   let error
   try {
@@ -96,8 +100,7 @@ async function pullFromBase (
     try {
       // push to head branch
       await git.push()
-    } catch
-      (e) {
+    } catch (e) {
       message = `${head} Failed push.`
       error = e
     }
@@ -114,15 +117,19 @@ async function pullFromBase (
 }
 
 // when pr opened, add help comment
-async function addHelpComments (
+async function addHelpComments(
   context: PullRequestContext,
-  // @ts-ignore
-  reference: PullRequestReference,
+  reference: PullRequestReference
 ) {
-  const { github, config: { mergeMethod } } = context
-  let labels = await github.getLabels()
+  const {
+    github,
+    config: { mergeMethod },
+    logger,
+  } = context
+  await logger.debug(JSON.stringify(reference))
+  const labels = await github.getLabels()
   if (labels.includes(DEFAULT_LABEL.BOT)) return
-// add help comment
+  // add help comment
   await github.comment(
     `## 간편한 배포를 도와주는 Release Bot 입니다. :)
 ### 다음과 같은 기능을 지원합니다. 
@@ -139,18 +146,19 @@ PR의 내용이 feature: blahblah 인 경우 아래와 같이 ${mergeMethod} com
 
 2. 릴리즈노트 추가
 머지(1)시 해당 PR의 내용을 릴리즈노트로 추가하고 태그를 push 합니다.
-`)
+`
+  )
 
   // push label
   await github.addLabels([DEFAULT_LABEL.BOT])
 }
 
-async function addNextVersionHint (
+async function addNextVersionHint(
   context: PullRequestContext,
-  // @ts-ignore
-  reference: PullRequestReference,
+  reference: PullRequestReference
 ) {
-  const { github, merged } = context
+  const { github, merged, logger } = context
+  await logger.debug(JSON.stringify(reference))
   if (merged) return
 
   const tags = await github.getTags()
@@ -170,77 +178,87 @@ async function addNextVersionHint (
 
   // comment version hint
   await github.comment(
-      `## 배포할 버전을 추천드립니다.
+    `## 배포할 버전을 추천드립니다.
       \nMajor: v${nextMajor}
       \nMinor: v${nextMinor}
       \nPatch: v${nextPatch}`
   )
-
 }
 
 // when pr merged, push tag, publish release note
-async function pushTag (
+async function pushTag(
   context: PullRequestContext,
-  // @ts-ignore
-  reference: PullRequestReference) {
-  const { merged, github, config: { releaseTitleTemplate }, logger } = context
+  reference: PullRequestReference
+) {
+  const {
+    merged,
+    github,
+    config: { releaseTitleTemplate },
+    logger,
+  } = context
+  await logger.debug(JSON.stringify(reference))
   if (!merged) return
 
   const labels = await github.getLabels()
   const version = labels.find((v) => VersionManager.isValid(v))
   if (!version) {
-    await github.comment('배포해야할 버전을 찾을 수 없습니다. 버전을 확인해주세요')
+    await github.comment(
+      '배포해야할 버전을 찾을 수 없습니다. 버전을 확인해주세요'
+    )
     return
   }
   const { body, merge_commit_sha } = await github.getPullRequest()
   try {
     const releaseTitle = releaseTitleTemplate!.replace('${VERSION}', version)
-    await github.createRelease(
-      merge_commit_sha!,
-      version,
-      releaseTitle,
-      body,
-    )
+    await github.createRelease(merge_commit_sha!, version, releaseTitle, body)
     await github.comment(`sha:${merge_commit_sha}에 대한 ${version} 태깅`)
     const releaseNoteLink = await github.getReleaseNotePath(version)
-    await github.comment(`릴리즈노트 [${releaseTitle}](${releaseNoteLink})가 생성되었습니다.`)
+    await github.comment(
+      `릴리즈노트 [${releaseTitle}](${releaseNoteLink})가 생성되었습니다.`
+    )
   } catch (e) {
-    await github.comment(`sha:${merge_commit_sha}에 대한 ${version} 태깅에 실패하였습니다\n\`\`\`${e}\`\`\``)
+    await github.comment(
+      `sha:${merge_commit_sha}에 대한 ${version} 태깅에 실패하였습니다\n\`\`\`${e}\`\`\``
+    )
     await logger.fatal(e)
   }
-
 }
 
-async function pushMergedCommitIntoMainBranch (
+async function pushMergedCommitIntoMainBranch(
   context: PullRequestContext,
-  // @ts-ignore
-  reference: PullRequestReference,
+  reference: PullRequestReference
 ) {
-  const { git, github, base, config: { mainBranch }, merged, logger } = context
+  const {
+    git,
+    github,
+    base,
+    config: { mainBranch },
+    merged,
+    logger,
+  } = context
+  await logger.debug(JSON.stringify(reference))
   if (!merged) return
   try {
     await git.clear()
     await git.clone(mainBranch!)
     await git.pull(base!)
     await git.push()
-    await github.comment(
-      `${base}와 ${mainBranch} 브랜치를 동기화하였습니다.`,
-    )
+    await github.comment(`${base}와 ${mainBranch} 브랜치를 동기화하였습니다.`)
     await git.clear()
   } catch (e) {
     await github.comment(
       `${base}와 ${mainBranch} 브랜치를 동기화 할 수 없습니다.\n\`\`\`${e}\`\`\`
-  `)
+  `
+    )
     await logger.fatal(e)
   }
-
 }
 
-async function clearClosedIssue (
+async function clearClosedIssue(
   context: PullRequestContext,
-  // @ts-ignore
-  reference: PullRequestReference,
+  reference: PullRequestReference
 ) {
-  const { git } = context
+  const { git, logger } = context
+  await logger.debug(JSON.stringify(reference))
   await git.clear()
 }

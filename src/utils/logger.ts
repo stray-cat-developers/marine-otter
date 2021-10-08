@@ -1,21 +1,21 @@
 import { DeprecatedLogger } from 'probot/lib/types'
 
 export class Logger {
-  constructor (
-    private readonly delegate: DeprecatedLogger,
-  ) {
+  constructor(private readonly delegate: DeprecatedLogger) {}
 
-  }
-
-  async error (error: any) {
+  async error(error: any) {
     this.delegate.error(error)
   }
 
-  async info (error: any) {
-    await this.delegate.info(error)
+  async info(message: any) {
+    await this.delegate.info(message)
   }
 
-  async fatal (error: any) {
+  async debug(message: any) {
+    await this.delegate.debug(message)
+  }
+
+  async fatal(error: any) {
     this.delegate.fatal(error)
   }
 }

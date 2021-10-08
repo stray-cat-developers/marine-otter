@@ -7,9 +7,11 @@ import { GitHub } from '@/utils/github'
 import { Logger } from '@/utils/logger'
 
 export interface WorkerContext {
-  createGitHubAPI: () => Promise<InstanceType<typeof ProbotOctokit>>,
-  event: string,
-  payload: EventPayloads.WebhookPayloadPullRequest & EventPayloads.WebhookPayloadIssueComment & EventPayloads.WebhookPayloadPush
+  createGitHubAPI: () => Promise<InstanceType<typeof ProbotOctokit>>
+  event: string
+  payload: EventPayloads.WebhookPayloadPullRequest &
+    EventPayloads.WebhookPayloadIssueComment &
+    EventPayloads.WebhookPayloadPush
   eventAction: string
   issueNumber: number
   config: Config
@@ -28,7 +30,7 @@ export interface HandlerContext {
 
 export interface PullRequestContext extends HandlerContext {
   merged: boolean
-  head: string,
+  head: string
   base: string
 }
 
@@ -39,9 +41,7 @@ export interface IssueCommentContext extends HandlerContext {
   pullRequest?: PullRequest
 }
 
-export interface InstallationContext extends HandlerContext {
-
-}
+export type InstallationContext = HandlerContext
 
 export interface PushContext extends HandlerContext {
   ref: string

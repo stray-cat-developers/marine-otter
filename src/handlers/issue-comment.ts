@@ -1,70 +1,83 @@
 import { IssueCommentContext } from '@/models/context'
-import { DEFAULT_LABEL, IssueCommentReference } from '@/models/github'
+import {
+  DEFAULT_LABEL,
+  IssueCommentReference,
+  MergeMethod,
+} from '@/models/github'
 import { RequestHandler } from '@/models/handler'
 import { VersionManager } from '@/utils/version'
 
-export const handleIssueComment: RequestHandler<IssueCommentContext, IssueCommentReference>
-  = async (
-  context: IssueCommentContext,
-  reference: IssueCommentReference,
-) => {
-  const { state, hasPullRequest, eventAction, github, pullRequest, logger } = context
+export const handleIssueComment: RequestHandler<
+  IssueCommentContext,
+  IssueCommentReference
+> = async (context: IssueCommentContext, reference: IssueCommentReference) => {
+  const { state, hasPullRequest, eventAction, github, pullRequest, logger } =
+    context
 
   if (hasPullRequest) {
     try {
-      if (state !== 'closed'
-        && eventAction === 'created'
-        && !pullRequest?.merged) {
-          await allowManualMerge(context, reference)
-          await processRelease(context, reference)
+      if (
+        state !== 'closed' &&
+        eventAction === 'created' &&
+        !pullRequest?.merged
+      ) {
+        await allowManualMerge(context, reference)
+        await processRelease(context, reference)
       }
     } catch (e) {
-      await github.comment(`Failed to execute manual merge or release.\n\`\`\`${e}\`\`\``)
+      await github.comment(
+        `Failed to execute manual merge or release.\n\`\`\`${e}\`\`\``
+      )
       await logger.fatal(e)
     }
   }
 }
 
-async function allowManualMerge (
+async function allowManualMerge(
   context: IssueCommentContext,
-  // @ts-ignore
-  reference: IssueCommentReference,
+  reference: IssueCommentReference
 ) {
-  const { github, content, pullRequest } = context
-  const enableManualMerge = RegExp(`^!release-bot enable manualMerge$`, 'g')
-    .test(content)
+  const { github, content, pullRequest, logger } = context
+  const enableManualMerge = RegExp(
+    `^!release-bot enable manualMerge$`,
+    'g'
+  ).test(content)
   if (!enableManualMerge) return
+  await logger.debug(JSON.stringify(reference))
   await github.addLabels([DEFAULT_LABEL.MANUAL_MERGE])
   await github.allowMerge(pullRequest?.head.sha || '')
 }
 
-async function processRelease (
+async function processRelease(
   context: IssueCommentContext,
-  // @ts-ignore
-  reference: IssueCommentReference,
+  reference: IssueCommentReference
 ) {
   const {
-    github, config: { mergeMethod, releaseTitleTemplate },
+    github,
+    config: { mergeMethod, releaseTitleTemplate },
     pullRequest,
     content,
-    logger
+    logger,
   } = context
+  await logger.debug(JSON.stringify(reference))
+  if (!content.startsWith('!release-bot release')) return
 
-  if (!content.startsWith('!release-bot release'))
-    return
-
-  if(!checkReleaseBranch(context)){
-    await github.comment(`It is not a release able target branch. (base:${context.pullRequest?.base.ref}), release: ${context.config.releaseBranch})`)
+  if (!checkReleaseBranch(context)) {
+    await github.comment(
+      `It is not a release able target branch. (base:${context.pullRequest?.base.ref}), release: ${context.config.releaseBranch})`
+    )
     return
   }
 
   if (!pullRequest!.mergeable) {
-    await github.comment('The PR cannot be merged. Please check the status or try again later')
+    await github.comment(
+      'The PR cannot be merged. Please check the status or try again later'
+    )
     return
   }
 
-  const [, version] = RegExp(`^!release-bot release (v.+)$`, 'g')
-    .exec(content) || []
+  const [, version] =
+    RegExp(`^!release-bot release (v.+)$`, 'g').exec(content) || []
   if (!version || !VersionManager.isValid(version)) {
     await github.comment(`Incorrect release version!`)
     return
@@ -79,25 +92,24 @@ async function processRelease (
 
   await github.addLabels([version])
   // allow merge
-  await github.allowMerge(
-    pullRequest?.head.sha || '')
+  await github.allowMerge(pullRequest?.head.sha || '')
 
   // merge commit
   try {
     await github.mergePullRequest(
       releaseTitleTemplate!.replace('${VERSION}', version),
       `${pullRequest!.body}`,
-      mergeMethod as any,
+      mergeMethod as MergeMethod
     )
   } catch (e) {
-    await github.comment(`The merge could not be performed for the following reasons:\n\`\`\`${e}\`\`\``)
+    await github.comment(
+      `The merge could not be performed for the following reasons:\n\`\`\`${e}\`\`\``
+    )
     await logger.fatal(e)
   }
 }
 
-function checkReleaseBranch(
-  context: IssueCommentContext,
-): boolean {
-  const {config, pullRequest} = context
-  return pullRequest?.base?.ref === config.releaseBranch;
+function checkReleaseBranch(context: IssueCommentContext): boolean {
+  const { config, pullRequest } = context
+  return pullRequest?.base?.ref === config.releaseBranch
 }

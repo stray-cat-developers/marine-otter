@@ -13,13 +13,9 @@ export interface IssueCommentReference extends RepositoryReference {
   issue_number: number
 }
 
-export interface InstallationReference extends RepositoryReference {
+export type InstallationReference = RepositoryReference
 
-}
-
-export interface PushReference extends RepositoryReference {
-
-}
+export type PushReference = RepositoryReference
 
 export type PullRequest = EventPayloads.WebhookPayloadPullRequestPullRequest
 
@@ -31,7 +27,6 @@ export const DEFAULT_BLOCK_MERGE_STATUS = {
 
 export const DEFAULT_PR_BUILD_STATUS = {
   context: 'continuous-integration/jenkins/pr-merge',
-
 }
 
 export const DEFAULT_BRANCH_BUILD_STATUS = {
@@ -44,13 +39,15 @@ export type IssueCommentEventAction = 'created' | 'deleted' | 'edited'
 
 export type InstallationEventAction = 'created' | 'deleted'
 
-export type EventAction = PullRequestEventAction & IssueCommentEventAction & InstallationEventAction
+export type EventAction = PullRequestEventAction &
+  IssueCommentEventAction &
+  InstallationEventAction
 
 export type CommitStatus = 'success' | 'error' | 'pending'
 
 export type MergeMethod = 'merge' | 'squash'
 
-export type MemeberRole = 'admin' | 'member'
+export type MemberRole = 'admin' | 'member'
 
 export const DEFAULT_LABEL = {
   MANUAL_MERGE: 'merge:manual',

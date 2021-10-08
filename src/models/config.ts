@@ -1,10 +1,9 @@
-
 export interface Config {
+  mainBranch: string
+  releaseBranch: string
   enabled?: boolean
   releaseTitleTemplate?: string
   mergeMethod?: string
-  mainBranch?: string
-  releaseBranch?: string
   blockManualMerge?: boolean
 }
 
