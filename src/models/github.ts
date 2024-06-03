@@ -1,5 +1,3 @@
-import { EventPayloads } from '@octokit/webhooks/dist-types/generated/event-payloads'
-
 export interface RepositoryReference {
   owner: string
   repo: string
@@ -16,8 +14,6 @@ export interface IssueCommentReference extends RepositoryReference {
 export type InstallationReference = RepositoryReference
 
 export type PushReference = RepositoryReference
-
-export type PullRequest = EventPayloads.WebhookPayloadPullRequestPullRequest
 
 export const DEFAULT_BLOCK_MERGE_STATUS = {
   name: 'block-manual-merge',

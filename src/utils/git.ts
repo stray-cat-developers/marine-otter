@@ -7,7 +7,7 @@ export class Git {
   private gitClient: SimpleGit
   private gitHost = process.env.GIT_HOST
   private user = process.env.GIT_USER
-  private password = process.env.GIT_TOKEN
+  private password = process.env.GIT_USER_TOKEN
   private readonly baseDir: string
 
   constructor(

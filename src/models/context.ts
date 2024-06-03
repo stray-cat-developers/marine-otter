@@ -1,17 +1,24 @@
 import { ProbotOctokit } from 'probot/lib/octokit/probot-octokit'
-import { EventPayloads } from '@octokit/webhooks/dist-types/generated/event-payloads'
 import { Config } from '@/models/config'
 import { Git } from '@/utils/git'
-import { EventAction, PullRequest } from '@/models/github'
+import { EventAction } from '@/models/github'
 import { GitHub } from '@/utils/github'
 import { Logger } from '@/utils/logger'
+import {
+  IssueCommentEvent,
+  PullRequest,
+  PullRequestEvent,
+  PushEvent,
+} from '@octokit/webhooks-types'
+
+export type WorkerContextEventPayload = PullRequestEvent &
+  IssueCommentEvent &
+  PushEvent
 
 export interface WorkerContext {
   createGitHubAPI: () => Promise<InstanceType<typeof ProbotOctokit>>
   event: string
-  payload: EventPayloads.WebhookPayloadPullRequest &
-    EventPayloads.WebhookPayloadIssueComment &
-    EventPayloads.WebhookPayloadPush
+  payload: WorkerContextEventPayload
   eventAction: string
   issueNumber: number
   config: Config

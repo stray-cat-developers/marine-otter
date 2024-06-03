@@ -1,4 +1,4 @@
-import { Application, Context } from 'probot'
+import { Context, Probot } from 'probot'
 import { RepositoryReference } from '@/models/github'
 import { WaitQueue } from '@/utils/queue'
 import {
@@ -8,6 +8,7 @@ import {
   PullRequestContext,
   PushContext,
   WorkerContext,
+  WorkerContextEventPayload,
 } from '@/models/context'
 import { handlePullRequest } from '@/handlers/pull-request'
 import { RequestHandler } from '@/models/handler'
@@ -33,7 +34,7 @@ export class RepositoryWorkerManager {
   }
 
   async createWorkerContext(options: {
-    app: Application
+    app: Probot
     context: Context
     installationId: number | undefined
     issueNumber: number
@@ -58,8 +59,8 @@ export class RepositoryWorkerManager {
     return {
       createGitHubAPI,
       event: context.name,
-      eventAction: context.payload.action,
-      payload: context.payload,
+      eventAction: (context.payload as any).action,
+      payload: context.payload as WorkerContextEventPayload,
       issueNumber: options.issueNumber,
       config,
       logger,
@@ -129,8 +130,7 @@ export class RepositoryWorker {
       this.repository.repo,
       issueNumber
     )
-    const githubDelegate =
-      (await context.createGitHubAPI()) as unknown as Context['github']
+    const githubDelegate = await context.createGitHubAPI()
     const github = new GitHub(
       this.repository.owner,
       this.repository.repo,

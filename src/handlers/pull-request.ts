@@ -45,7 +45,9 @@ async function prepareReleaseNote(context: PullRequestContext) {
   const { github } = context
   const commits = await github.getCommits()
   let preReleaseNote = ''
-  commits.forEach((c) => (preReleaseNote += `${c.message.split('\n')[0]}\n`))
+  commits.forEach(
+    (c: any) => (preReleaseNote += `${c.message.split('\n')[0]}\n`)
+  )
   await github.setPullRequestBody(preReleaseNote)
 }
 
@@ -162,7 +164,7 @@ async function addNextVersionHint(
   if (merged) return
 
   const tags = await github.getTags()
-  const versions = tags.filter((t) => VersionManager.isValid(t))
+  const versions = tags.filter((t: any) => VersionManager.isValid(t))
   if (versions.length === 0) {
     await github.comment(
       `## 배포할 버전을 추천드립니다.
@@ -200,7 +202,7 @@ async function pushTag(
   if (!merged) return
 
   const labels = await github.getLabels()
-  const version = labels.find((v) => VersionManager.isValid(v))
+  const version = labels.find((v: any) => VersionManager.isValid(v))
   if (!version) {
     await github.comment(
       '배포해야할 버전을 찾을 수 없습니다. 버전을 확인해주세요'
@@ -210,7 +212,12 @@ async function pushTag(
   const { body, merge_commit_sha } = await github.getPullRequest()
   try {
     const releaseTitle = releaseTitleTemplate!.replace('${VERSION}', version)
-    await github.createRelease(merge_commit_sha!, version, releaseTitle, body)
+    await github.createRelease(
+      merge_commit_sha!,
+      version,
+      releaseTitle,
+      body || ''
+    )
     await github.comment(`sha:${merge_commit_sha}에 대한 ${version} 태깅`)
     const releaseNoteLink = await github.getReleaseNotePath(version)
     await github.comment(

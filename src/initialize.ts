@@ -1,13 +1,13 @@
 import { Router } from 'express'
-import { Application, Context } from 'probot'
+import { Probot, Context } from 'probot'
 import { RepositoryWorkerManager } from '@/workers/repository-worker'
 import { RepositoryReference } from '@/models/github'
 
-export const addListeners = (app: Application, router: Router) => {
+export const addListeners = (app: Probot, router: Router) => {
   const repositoryWorkerManager = new RepositoryWorkerManager()
 
   async function enqueue(
-    app: Application,
+    app: Probot,
     context: Context,
     installationId: number | undefined,
     repository: RepositoryReference,
@@ -76,7 +76,7 @@ export const addListeners = (app: Application, router: Router) => {
   })
 
   app.on(['installation.created'], async (context) => {
-    for (const repository of context.payload.repositories) {
+    for (const repository of context.payload?.repositories ?? []) {
       const [owner, repo] = repository.full_name.split('/')
       await enqueue(
         app,
