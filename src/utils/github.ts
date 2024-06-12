@@ -1,4 +1,3 @@
-import { Context } from 'probot'
 import {
   CommitStatus,
   DEFAULT_BLOCK_MERGE_STATUS,
@@ -6,15 +5,16 @@ import {
   DEFAULT_PR_BUILD_STATUS,
   MemberRole,
   MergeMethod,
-  PullRequest,
 } from '@/models/github'
+import type { ProbotOctokit } from 'probot/lib/octokit/probot-octokit'
+import { PullRequest } from '@octokit/webhooks-types'
 
 export class GitHub {
   constructor(
     private owner: string,
     private repo: string,
     private issueNumber: number,
-    private readonly delegate: Context['github']
+    private readonly delegate: ProbotOctokit
   ) {}
 
   private get reference() {
@@ -130,7 +130,7 @@ export class GitHub {
       repo: this.repo,
       issue_number: this.issueNumber,
     })
-    return data.map((v) => v.name)
+    return data.map((v: any) => v.name)
   }
 
   async addLabels(labels: string[]) {
@@ -148,7 +148,7 @@ export class GitHub {
       owner: this.owner,
       repo: this.repo,
     })
-    return data.map((v) => v.name)
+    return data.map((v: any) => v.name)
   }
 
   async blockMerge(sha: string) {
@@ -177,7 +177,7 @@ export class GitHub {
       repo: this.repo,
       pull_number: this.issueNumber,
     })
-    return data.map((v) => v.commit)
+    return data.map((v: any) => v.commit)
   }
 
   async setPullRequestBody(message: string) {

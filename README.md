@@ -1,12 +1,17 @@
 # marine-otter
-github app을 이용하여 개발 코드를 release 시 개발자가 git flow의 꼬임을 방지해주고 자동으로 tag를 생성하는 봇입니다.
-> A GitHub App built with [Probot](https://github.com/probot/probot)
-
-[![Build Status](https://app.travis-ci.com/fennec-fox/marine-otter.svg?branch=master)](https://app.travis-ci.com/fennec-fox/marine-otter)
-
+개발 코드를 release 시 개발자가 git flow의 꼬임을 방지해주고 자동으로 tag를 생성하는 봇입니다.  
+> powered by [Probot](https://github.com/probot/probot)
 
 ## How to use
-// TODO
+```sh
+# run application
+npm run start
+
+# connect with github app
+visit http://localhost:3000
+
+# follow the instructions on the page!
+```
 
 ## Support Git Flow
 - two branch tag release 전략

@@ -85,7 +85,7 @@ async function processRelease(
 
   // check duplicate version
   const tags = await github.getTags()
-  if (tags.find((t) => t === version)) {
+  if (tags.find((t: any) => t === version)) {
     await github.comment('The same version exists. please check the version.')
     return
   }

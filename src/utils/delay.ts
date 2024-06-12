@@ -4,11 +4,11 @@ export function delay(ms: number): CancelablePromise<void> {
   let onCancel = null
   const result: any = new Promise((resolve) => {
     const timer = setTimeout(() => {
-      resolve()
+      resolve(undefined)
     }, ms)
     onCancel = () => {
       clearTimeout(timer)
-      resolve()
+      resolve(undefined)
     }
   })
   result.cancel = onCancel
